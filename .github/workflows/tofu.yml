@@ -13,6 +13,8 @@ jobs:
   plan:
     name: "Tofu Plan"
     runs-on: ubuntu-latest
+    env:
+      TF_VAR_my_github_secret: ${{ secrets.my_github_secret }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -38,6 +40,8 @@ jobs:
     
     # IMPORTANT: This links to a GitHub Environment with protection rules
     environment: production 
+    env:
+      TF_VAR_my_github_secret: ${{ secrets.my_github_secret }}
 
     steps:
       - name: Checkout Code
