@@ -13,7 +13,7 @@ jobs:
     concurrency:
       group: qa-group
       cancel-in-progress: true
-    uses: ./.github/workflows/tofu-base.yaml
+    uses: ./.github/workflows/tofu-base.yml
     with:
       environment: "qa"
     secrets: 
@@ -23,7 +23,7 @@ jobs:
     concurrency:
       group: dev-group
       cancel-in-progress: true
-    uses: ./.github/workflows/tofu-base.yaml
+    uses: ./.github/workflows/tofu-base.yml
     with:
       environment: "dev"
     secrets: 
