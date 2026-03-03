@@ -1,4 +1,4 @@
-name: "OpenTofu SDLC"
+name: "OpenTofu SDLC - Multiple Environments"
 
 on:
   push:
@@ -8,50 +8,23 @@ on:
   workflow_dispatch: # Allows manual trigger for testing
 
 jobs:
-  # --- PLAN JOB ---
-  # Runs automatically on every push to check for syntax and logic
-  plan:
-    name: "Tofu Plan"
-    runs-on: ubuntu-latest
-    env:
-      TF_VAR_my_github_secret: ${{ secrets.my_github_secret }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
 
-      - name: Setup OpenTofu
-        uses: opentofu/setup-opentofu@v1
-        with:
-          tofu_version: 1.11.5
+  call-tofu-base-qa:
+    concurrency:
+      group: qa-group
+      cancel-in-progress: true
+    uses: ./.github/workflows/tofu-base.yaml
+    with:
+      environment: "qa"
+    secrets: 
+      my_github_secret: ${{ secrets.my_github_secret }}
 
-      - name: Tofu Init
-        run: tofu init
-
-      - name: Tofu Plan
-        run: tofu plan -var="environment=dev"
-
-  # --- APPLY JOB ---
-  # Only runs after Plan succeeds and requires manual approval
-  apply:
-    name: "Tofu Apply"
-    needs: plan
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' # Only allow apply from main branch
-    
-    # IMPORTANT: This links to a GitHub Environment with protection rules
-    environment: production 
-    env:
-      TF_VAR_my_github_secret: ${{ secrets.my_github_secret }}
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup OpenTofu
-        uses: opentofu/setup-opentofu@v1
-
-      - name: Tofu Init
-        run: tofu init
-
-      - name: Tofu Apply
-        run: tofu apply -auto-approve -var="environment=prod"
+  call-tofu-base-dev:
+    concurrency:
+      group: dev-group
+      cancel-in-progress: true
+    uses: ./.github/workflows/tofu-base.yaml
+    with:
+      environment: "dev"
+    secrets: 
+      my_github_secret: ${{ secrets.my_github_secret }}
