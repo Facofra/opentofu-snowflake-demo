@@ -41,7 +41,7 @@ jobs:
       environment: QA
 
   call-tofu-base-qa-apply:
-    needs: call-tofu-base-qa-plan
+    needs: call-tofu-base-dev-apply
     concurrency:
       group: qa-group-apply
       cancel-in-progress: true
