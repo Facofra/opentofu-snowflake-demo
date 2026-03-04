@@ -9,22 +9,43 @@ on:
 
 jobs:
 
-  call-tofu-base-dev:
+  call-tofu-base-dev-plan:
     concurrency:
-      group: dev-group
+      group: dev-group-plan
       cancel-in-progress: true
-    uses: ./.github/workflows/tofu-base.yml
+    uses: ./.github/workflows/tofu-base-plan.yml
     secrets:
       my_github_secret: ${{ secrets.my_github_secret_dev }}
     with:
       environment: DEV
 
-  call-tofu-base-qa:
-    needs: call-tofu-base-dev
+  call-tofu-base-dev-apply:
+    needs: call-tofu-base-dev-plan
     concurrency:
-      group: qa-group
+      group: dev-group-apply
       cancel-in-progress: true
-    uses: ./.github/workflows/tofu-base.yml
+    uses: ./.github/workflows/tofu-base-apply.yml
+    secrets:
+      my_github_secret: ${{ secrets.my_github_secret_dev }}
+    with:
+      environment: DEV
+
+  call-tofu-base-qa-plan:
+    concurrency:
+      group: qa-group-plan
+      cancel-in-progress: true
+    uses: ./.github/workflows/tofu-base-plan.yml
+    secrets:
+      my_github_secret: ${{ secrets.my_github_secret_qa }}
+    with:
+      environment: QA
+
+  call-tofu-base-qa-apply:
+    needs: call-tofu-base-qa-plan
+    concurrency:
+      group: qa-group-apply
+      cancel-in-progress: true
+    uses: ./.github/workflows/tofu-base-apply.yml
     secrets:
       my_github_secret: ${{ secrets.my_github_secret_qa }}
     with:

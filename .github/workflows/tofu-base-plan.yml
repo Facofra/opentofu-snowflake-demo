@@ -1,0 +1,34 @@
+name: "OpenTofu SDLC"
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+    secrets: 
+      my_github_secret:
+        required: true
+
+jobs:
+  # --- PLAN JOB ---
+  # Runs automatically on every push to check for syntax and logic
+  plan:
+    name: "Tofu Plan"
+    runs-on: ubuntu-latest
+    env:
+      TF_VAR_my_github_secret: ${{ secrets.my_github_secret }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.11.5
+
+      - name: Tofu Init
+        run: tofu init
+
+      - name: Tofu Plan
+        run: tofu plan -var="environment=${{ inputs.environment }}"
