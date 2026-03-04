@@ -14,6 +14,8 @@ jobs:
       group: qa-group
       cancel-in-progress: true
     uses: ./.github/workflows/tofu-base.yml
+    secrets:
+      my_github_secret: ${{ secrets.my_github_secret_qa }}
     with:
       environment: QA
 
@@ -23,6 +25,8 @@ jobs:
       group: dev-group
       cancel-in-progress: true
     uses: ./.github/workflows/tofu-base.yml
+    secrets:
+      my_github_secret: ${{ secrets.my_github_secret_dev }}
     with:
       environment: DEV
 

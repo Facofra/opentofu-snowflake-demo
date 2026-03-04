@@ -6,6 +6,9 @@ on:
       environment:
         required: true
         type: string
+  secrets: 
+        my_github_secret:
+          required: true
 
 jobs:
   # --- PLAN JOB ---
@@ -40,7 +43,7 @@ jobs:
     
     # IMPORTANT: This links to a GitHub Environment with protection rules
     environment: 
-      name: ${{ inputs.environment }}
+      name: Apply
     env:
       TF_VAR_my_github_secret: ${{ secrets.my_github_secret }}
 
