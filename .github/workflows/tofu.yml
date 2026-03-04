@@ -9,17 +9,6 @@ on:
 
 jobs:
 
-  call-tofu-base-qa:
-    concurrency:
-      group: qa-group
-      cancel-in-progress: true
-    uses: ./.github/workflows/tofu-base.yml
-    secrets:
-      my_github_secret: ${{ secrets.my_github_secret_qa }}
-    with:
-      environment: QA
-
-
   call-tofu-base-dev:
     concurrency:
       group: dev-group
@@ -29,4 +18,16 @@ jobs:
       my_github_secret: ${{ secrets.my_github_secret_dev }}
     with:
       environment: DEV
+
+  call-tofu-base-qa:
+    needs: call-tofu-base-dev
+    concurrency:
+      group: qa-group
+      cancel-in-progress: true
+    uses: ./.github/workflows/tofu-base.yml
+    secrets:
+      my_github_secret: ${{ secrets.my_github_secret_qa }}
+    with:
+      environment: QA
+
 
