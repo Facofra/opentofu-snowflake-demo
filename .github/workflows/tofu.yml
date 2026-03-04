@@ -14,6 +14,9 @@ jobs:
       group: qa-group
       cancel-in-progress: true
     uses: ./.github/workflows/tofu-base.yml
+    environment: QA
+    secrets:
+      inherit: true
     with:
       environment: QA
 
@@ -23,6 +26,9 @@ jobs:
       group: dev-group
       cancel-in-progress: true
     uses: ./.github/workflows/tofu-base.yml
+    environment: DEV
+    secrets:
+      inherit: true
     with:
       environment: DEV
 

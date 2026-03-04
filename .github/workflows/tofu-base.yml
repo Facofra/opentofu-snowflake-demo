@@ -54,7 +54,7 @@ jobs:
         run: tofu init
 
       - name: Tofu Apply
-        run: echo "This would apply changes for environment ${{ inputs.environment }}"
+        run: echo "This would apply changes for environment ${{ inputs.environment }} in ${{ job.environment }}"
 
       - name: Loop secret safely
         run: |
