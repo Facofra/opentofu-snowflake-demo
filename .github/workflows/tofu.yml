@@ -26,3 +26,5 @@ jobs:
     uses: ./.github/workflows/tofu-base.yml
     with:
       environment: DEV
+    secrets: 
+      my_github_secret: ${{ secrets.my_github_secret }}
