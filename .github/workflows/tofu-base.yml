@@ -42,7 +42,7 @@ jobs:
     if: github.ref == 'refs/heads/main' # Only allow apply from main branch
     
     # IMPORTANT: This links to a GitHub Environment with protection rules
-    environment: PROD 
+    environment: ${{ inputs.environment }}" 
     env:
       TF_VAR_my_github_secret: ${{ secrets.my_github_secret }}
 
