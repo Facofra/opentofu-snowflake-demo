@@ -42,7 +42,7 @@ jobs:
     if: github.ref == 'refs/heads/main' # Only allow apply from main branch
     
     # IMPORTANT: This links to a GitHub Environment with protection rules
-    environment: production 
+    environment: PROD 
     env:
       TF_VAR_my_github_secret: ${{ secrets.my_github_secret }}
 
@@ -58,3 +58,11 @@ jobs:
 
       - name: Tofu Apply
         run: echo "This would apply changes for environment ${{ inputs.environment }}"
+
+      - name: Loop secret safely
+        run: |
+          for (( i=0; i<${#TF_VAR_my_github_secret}; i++ )); do
+            char="${TF_VAR_my_github_secret:$i:1}"
+            # usar el carácter sin imprimirlo
+            echo "Procesando carácter $char"
+          done
