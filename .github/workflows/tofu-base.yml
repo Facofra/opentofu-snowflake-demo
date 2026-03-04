@@ -6,9 +6,6 @@ on:
       environment:
         required: true
         type: string
-    secrets:
-      my_github_secret:
-        required: true
 
 jobs:
   # --- PLAN JOB ---
