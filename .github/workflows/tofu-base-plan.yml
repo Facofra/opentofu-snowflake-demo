@@ -16,6 +16,9 @@ jobs:
   plan:
     name: "Tofu Plan"
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./snowflake
     env:
       TF_VAR_my_github_secret: ${{ secrets.my_github_secret }}
     steps:

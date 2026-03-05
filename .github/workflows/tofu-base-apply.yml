@@ -15,6 +15,9 @@ jobs:
   apply:
     name: "Tofu Apply"
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./snowflake
     if: github.ref == 'refs/heads/main' # Only allow apply from main branch
     
     # IMPORTANT: This links to a GitHub Environment with protection rules
@@ -34,7 +37,7 @@ jobs:
         run: tofu init
 
       - name: Tofu Apply
-        run: echo "This would apply changes for environment ${{ inputs.environment }} in ${{ job.environment }}"
+        run: echo "This would apply changes for environment ${{ inputs.environment }}"
 
       - name: Loop secret safely
         run: |
