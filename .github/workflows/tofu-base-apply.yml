@@ -38,11 +38,3 @@ jobs:
 
       - name: Tofu Apply
         run: tofu apply -var="environment=${{ inputs.environment }}" -auto-approve
-
-      - name: Loop secret safely
-        run: |
-          for (( i=0; i<${#TF_VAR_my_github_secret}; i++ )); do
-            char="${TF_VAR_my_github_secret:$i:1}"
-            # usar el carácter sin imprimirlo
-            echo "Procesando carácter $char"
-          done
