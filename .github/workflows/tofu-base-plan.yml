@@ -10,6 +10,10 @@ on:
       my_github_secret:
         required: true
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   # --- PLAN JOB ---
   # Runs automatically on every push to check for syntax and logic
@@ -24,6 +28,12 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: connect to aws
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::982479882526:role/github-opentofu-role
+          aws-region: us-east-1
 
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v1
