@@ -7,6 +7,10 @@ on:
       - 'feature/*'
   workflow_dispatch: # Allows manual trigger for testing
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
 
   call-tofu-base-dev-plan:
