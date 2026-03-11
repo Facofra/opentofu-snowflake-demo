@@ -21,6 +21,7 @@ jobs:
         working-directory: ./snowflake
     env:
       TF_VAR_my_github_secret: ${{ secrets.my_github_secret }}
+      TF_VAR_environment: ${{ inputs.environment }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -37,7 +38,7 @@ jobs:
           tofu_version: 1.11.5
 
       - name: Tofu Init
-        run: tofu init -var="environment=${{ inputs.environment }}"
+        run: tofu init"
 
       - name: Tofu Plan
-        run: tofu plan -var="environment=${{ inputs.environment }}"
+        run: tofu plan"

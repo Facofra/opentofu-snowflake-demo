@@ -25,6 +25,8 @@ jobs:
       name: Apply
     env:
       TF_VAR_my_github_secret: ${{ secrets.my_github_secret }}
+      TF_VAR_environment: ${{ inputs.environment }}
+
 
     steps:
       - name: Checkout Code
@@ -40,7 +42,7 @@ jobs:
         uses: opentofu/setup-opentofu@v1
 
       - name: Tofu Init
-        run: tofu init -var="environment=${{ inputs.environment }}"
+        run: tofu init
 
       - name: Tofu Apply
-        run: tofu apply -var="environment=${{ inputs.environment }}" -auto-approve
+        run: tofu apply -auto-approve
