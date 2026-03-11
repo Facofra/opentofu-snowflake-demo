@@ -8,6 +8,20 @@ terraform {
   }
 }
 
+# AWS provider configuration (required to manage resources)
+provider "aws" {
+  region = "us-east-1"
+}
+
+# create the bucket where the state is stored (if it doesn't already exist)
+resource "aws_s3_bucket" "state" {
+  bucket = "opentofu-demo-bucket-v1"
+  acl    = "private"
+}
+
+
+
+
 
 # A very simple configuration that doesn't need external providers
 resource "null_resource" "example2" {
@@ -15,6 +29,8 @@ resource "null_resource" "example2" {
     command = "echo 'Hello OpenTofu! Environment: ${var.environment}. The secret value is: ${nonsensitive(var.my_github_secret)}'"
   }
 }
+
+
 
 
 
