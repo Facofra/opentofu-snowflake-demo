@@ -14,9 +14,8 @@ provider "aws" {
 }
 
 # create the bucket where the state is stored (if it doesn't already exist)
-resource "aws_s3_bucket" "state" {
-  bucket = "opentofu-demo-bucket-v1"
-  acl    = "private"
+resource "aws_s3_bucket" "demo-bucket" {
+  bucket = "opentofu-demo-bucket-${var.environment}-v1"
 }
 
 

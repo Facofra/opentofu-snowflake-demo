@@ -10,10 +10,6 @@ on:
       my_github_secret:
         required: true
 
-permissions:
-  contents: read
-  id-token: write
-
 jobs:
   # --- PLAN JOB ---
   # Runs automatically on every push to check for syntax and logic
