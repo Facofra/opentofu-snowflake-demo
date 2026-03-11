@@ -21,7 +21,7 @@ jobs:
     secrets:
       my_github_secret: ${{ secrets.my_github_secret_dev }}
     with:
-      environment: DEV
+      environment: dev
 
   call-tofu-base-dev-apply:
     concurrency:
@@ -31,7 +31,7 @@ jobs:
     secrets:
       my_github_secret: ${{ secrets.my_github_secret_dev }}
     with:
-      environment: DEV
+      environment: dev
 
   call-tofu-base-qa-plan:
     needs: call-tofu-base-dev-apply
@@ -42,7 +42,7 @@ jobs:
     secrets:
       my_github_secret: ${{ secrets.my_github_secret_qa }}
     with:
-      environment: QA
+      environment: qa
 
   call-tofu-base-qa-apply:
     needs: call-tofu-base-dev-apply
@@ -53,6 +53,6 @@ jobs:
     secrets:
       my_github_secret: ${{ secrets.my_github_secret_qa }}
     with:
-      environment: QA
+      environment: qa
 
 
