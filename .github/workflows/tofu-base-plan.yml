@@ -38,7 +38,7 @@ jobs:
           tofu_version: 1.11.5
 
       - name: Tofu Init
-        run: tofu init"
+        run: tofu init
 
       - name: Tofu Plan
-        run: tofu plan"
+        run: tofu plan
