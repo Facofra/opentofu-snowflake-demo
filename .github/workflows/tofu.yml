@@ -34,7 +34,6 @@ jobs:
       environment: dev
 
   call-tofu-base-qa-plan:
-    needs: call-tofu-base-dev-apply
     concurrency:
       group: qa-group-plan
       cancel-in-progress: true

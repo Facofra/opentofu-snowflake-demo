@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     # configure these values for your environment
-    bucket = "opentofu-state-demo-bucket"
+    bucket = "opentofu-state-demo-bucket-${var.environment}"
     key    = "terraform.tfstate"
     region = "us-east-1"
     use_lockfile=true
