@@ -40,7 +40,7 @@ jobs:
         uses: opentofu/setup-opentofu@v1
 
       - name: Tofu Init
-        run: tofu init
+        run: tofu init -var="environment=${{ inputs.environment }}"
 
       - name: Tofu Apply
         run: tofu apply -var="environment=${{ inputs.environment }}" -auto-approve

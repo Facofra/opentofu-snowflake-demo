@@ -37,7 +37,7 @@ jobs:
           tofu_version: 1.11.5
 
       - name: Tofu Init
-        run: tofu init
+        run: tofu init -var="environment=${{ inputs.environment }}"
 
       - name: Tofu Plan
         run: tofu plan -var="environment=${{ inputs.environment }}"
