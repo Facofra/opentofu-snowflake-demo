@@ -1,4 +1,4 @@
-name: "OpenTofu SDLC"
+name: "base apply 2"
 
 on:
   workflow_call:
@@ -18,7 +18,6 @@ jobs:
     defaults:
       run:
         working-directory: ./snowflake
-    if: github.ref == 'refs/heads/main' # Only allow apply from main branch
     
     # IMPORTANT: This links to a GitHub Environment with protection rules
     environment: 
@@ -30,11 +29,5 @@ jobs:
 
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup OpenTofu
-        uses: opentofu/setup-opentofu@v1
-
       - name: Tofu Apply
         run: echo 'would apply' #tofu apply -auto-approve

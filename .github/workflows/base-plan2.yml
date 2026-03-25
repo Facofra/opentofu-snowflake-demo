@@ -1,4 +1,4 @@
-name: "OpenTofu SDLC 2"
+name: "base plan 2"
 
 on:
   workflow_call:
@@ -23,10 +23,5 @@ jobs:
       TF_VAR_my_github_secret: ${{ secrets.my_github_secret }}
       TF_VAR_environment: ${{ inputs.environment }}
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup OpenTofu
-        uses: opentofu/setup-opentofu@v1
-        with:
-          tofu_version: 1.11.5
+      - name: Tofu plan
+        run: echo 'would plan'

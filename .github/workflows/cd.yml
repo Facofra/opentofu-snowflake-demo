@@ -1,4 +1,4 @@
-name: "OpenTofu 2"
+name: "CD"
 
 on:
   push:
@@ -13,41 +13,41 @@ permissions:
 
 jobs:
 
-  call-tofu-base-dev-plan2:
+  call-base-dev-plan2:
     concurrency:
       group: dev-group-plan2
       cancel-in-progress: true
-    uses: ./.github/workflows/tofu-base-plan2.yml
+    uses: ./.github/workflows/base-plan2.yml
     secrets:
       my_github_secret: ${{ secrets.my_github_secret_dev }}
     with:
       environment: DEV
 
-  call-tofu-base-dev-apply2:
+  call-base-dev-apply2:
     concurrency:
       group: dev-group-apply2
       cancel-in-progress: true
-    uses: ./.github/workflows/tofu-base-apply2.yml
+    uses: ./.github/workflows/base-apply2.yml
     secrets:
       my_github_secret: ${{ secrets.my_github_secret_dev }}
     with:
       environment: DEV
 
-  call-tofu-base-prod-plan2:
+  call-base-prod-plan2:
     concurrency:
       group: prod-group-plan2
       cancel-in-progress: true
-    uses: ./.github/workflows/tofu-base-plan2.yml
+    uses: ./.github/workflows/base-plan2.yml
     secrets:
       my_github_secret: ${{ secrets.my_github_secret_qa }}
     with:
       environment: PROD
 
-  call-tofu-base-prod-apply2:
+  call-base-prod-apply2:
     concurrency:
       group: prod-group-apply2
       cancel-in-progress: true
-    uses: ./.github/workflows/tofu-base-apply2.yml
+    uses: ./.github/workflows/base-apply2.yml
     secrets:
       my_github_secret: ${{ secrets.my_github_secret_qa }}
     with:
