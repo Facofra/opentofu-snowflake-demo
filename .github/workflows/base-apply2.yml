@@ -29,5 +29,6 @@ jobs:
 
 
     steps:
-      - name: Tofu Apply
-        run: echo 'would apply' #tofu apply -auto-approve
+      - name: Checkout Code
+        uses: actions/checkout@v4
+

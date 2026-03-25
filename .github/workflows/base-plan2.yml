@@ -23,5 +23,5 @@ jobs:
       TF_VAR_my_github_secret: ${{ secrets.my_github_secret }}
       TF_VAR_environment: ${{ inputs.environment }}
     steps:
-      - name: Tofu plan
-        run: echo 'would plan'
+      - name: Checkout Code
+        uses: actions/checkout@v4
