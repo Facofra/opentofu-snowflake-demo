@@ -1,0 +1,49 @@
+name: "OpenTofu SDLC"
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+    secrets: 
+      my_github_secret:
+        required: true
+
+jobs:
+  
+  apply:
+    name: "Tofu Apply"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./snowflake
+    if: github.ref == 'refs/heads/main' # Only allow apply from main branch
+    
+    # IMPORTANT: This links to a GitHub Environment with protection rules
+    environment: 
+      name: ${{ inputs.environment }}
+      url: https://github.com
+    env:
+      TF_VAR_my_github_secret: ${{ secrets.my_github_secret }}
+      TF_VAR_environment: ${{ inputs.environment }}
+
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: connect to aws
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::982479882526:role/github-opentofu-role
+          aws-region: us-east-1
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+
+      - name: Tofu Init
+        run: tofu init
+
+      - name: Tofu Apply
+        run: echo 'would apply' #tofu apply -auto-approve
