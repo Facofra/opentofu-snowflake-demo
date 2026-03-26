@@ -25,3 +25,16 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Tofu Plan
+        run: |
+          mkdir -p ${{ github.workspace }}/plans
+          echo "subiendo mensaje a ${{ github.workspace }}/plans/snowflake-${{ inputs.environment }}"
+          echo "mensaje guardado para ${{ inputs.environment }}" > ${{ github.workspace }}/plans/snowflake-${{ inputs.environment }}
+
+      - name: Upload Tofu Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'TF-Plan-${{ inputs.environment }}'
+          path: ${{ github.workspace }}/plans/snowflake-${{ inputs.environment }}
+          retention-days: 1
