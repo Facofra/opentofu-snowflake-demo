@@ -38,7 +38,14 @@ jobs:
         run: |
           mkdir -p ${{ github.workspace }}/plans
           echo "----- TOFU PLAN ----- Cleaning up the output by hiding (known after apply) to reduce noise "
+          set -o pipefail
           tofu plan -out=${{ github.workspace }}/plans/snowflake-${{ inputs.environment }} | grep -v "known after apply"
+
+      - name: Tofu Plan2
+        run: |
+          mkdir -p ${{ github.workspace }}/plans
+          echo "----- TOFU PLAN ----- Cleaning up the output by hiding (known after apply) to reduce noise "
+          tofu plan -out=${{ github.workspace }}/plans/snowflake-${{ inputs.environment }} | grep -v "known after apply"; exit ${PIPESTATUS[0]}
 
       - name: Tofu Plan again
         run: |
