@@ -22,35 +22,3 @@ jobs:
       my_github_secret: ${{ secrets.my_github_secret_dev }}
     with:
       environment: DEV
-
-  call-base-dev-apply2:
-    concurrency:
-      group: dev-group-apply2
-      cancel-in-progress: true
-    uses: ./.github/workflows/base-apply2.yml
-    secrets:
-      my_github_secret: ${{ secrets.my_github_secret_dev }}
-    with:
-      environment: DEV
-
-  call-base-prod-plan2:
-    concurrency:
-      group: prod-group-plan2
-      cancel-in-progress: true
-    uses: ./.github/workflows/base-plan2.yml
-    secrets:
-      my_github_secret: ${{ secrets.my_github_secret_qa }}
-    with:
-      environment: PROD
-
-  call-base-prod-apply2:
-    concurrency:
-      group: prod-group-apply2
-      cancel-in-progress: true
-    uses: ./.github/workflows/base-apply2.yml
-    secrets:
-      my_github_secret: ${{ secrets.my_github_secret_qa }}
-    with:
-      environment: PROD
-
-

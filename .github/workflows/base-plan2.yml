@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./snowflake
+        working-directory: ./snowflaketest
     env:
       TF_VAR_my_github_secret: ${{ secrets.my_github_secret }}
       TF_VAR_environment: ${{ inputs.environment }}
@@ -26,11 +26,24 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.11.5
+
+      - name: Tofu Init
+        run: tofu init
+
       - name: Tofu Plan
         run: |
           mkdir -p ${{ github.workspace }}/plans
-          echo "subiendo mensaje a ${{ github.workspace }}/plans/snowflake-${{ inputs.environment }}"
-          echo "mensaje guardado para ${{ inputs.environment }}" > ${{ github.workspace }}/plans/snowflake-${{ inputs.environment }}
+          echo "----- TOFU PLAN ----- Cleaning up the output by hiding (known after apply) to reduce noise "
+          tofu plan -out=${{ github.workspace }}/plans/snowflake-${{ inputs.environment }} | grep -v "known after apply"
+
+      - name: Tofu Plan again
+        run: |
+          echo "----- TOFU PLAN -----"
+          tofu plan -out=${{ github.workspace }}/plans/just_test
 
       - name: Upload Tofu Plan
         uses: actions/upload-artifact@v4
