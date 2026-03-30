@@ -1,4 +1,4 @@
-name: "base plan 2"
+name: "base apply 2"
 
 on:
   workflow_call:
@@ -11,14 +11,16 @@ on:
         required: true
 
 jobs:
-  # --- PLAN JOB ---
+  # --- apply JOB ---
   # Runs automatically on every push to check for syntax and logic
-  plan:
-    name: "Tofu Plan"
+  apply:
+    name: "Tofu apply"
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./snowflaketest
+    environment: 
+      name: ${{ inputs.environment }}
     env:
       TF_VAR_my_github_secret: ${{ secrets.my_github_secret }}
       TF_VAR_environment: ${{ inputs.environment }}
@@ -33,19 +35,19 @@ jobs:
         with:
           tofu_version: 1.11.5
 
+
+      - name: Download Plan
+        id: download-plan
+        uses: actions/download-artifact@v4
+        with:
+          name: 'TF-Plan-${{ inputs.environment }}'
+          path: ${{ github.workspace }}/plans/
+
+
       - name: Tofu Init
         run: tofu init
 
-      - name: Tofu Plan
+      - name: Tofu apply
         run: |
-          mkdir -p ${{ github.workspace }}/plans
-          echo "----- TOFU PLAN ----- Cleaning up the output by hiding (known after apply) to reduce noise "
-          set -o pipefail
-          tofu plan -out=${{ env.PLAN_FILE }} | grep -v "known after apply"
-
-      - name: Upload Tofu Plan
-        uses: actions/upload-artifact@v4
-        with:
-          name: 'TF-Plan-${{ inputs.environment }}'
-          path: ${{ env.PLAN_FILE }}
-          retention-days: 1
+          echo "----- TOFU apply -----"
+          tofu apply ${{ env.PLAN_FILE }}

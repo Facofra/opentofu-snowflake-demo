@@ -22,3 +22,13 @@ jobs:
       my_github_secret: ${{ secrets.my_github_secret_dev }}
     with:
       environment: DEV
+
+  call-base-dev-apply2:
+    concurrency:
+      group: dev-group-apply2
+      cancel-in-progress: true
+    uses: ./.github/workflows/base-apply2.yml
+    secrets:
+      my_github_secret: ${{ secrets.my_github_secret_dev }}
+    with:
+      environment: DEV
