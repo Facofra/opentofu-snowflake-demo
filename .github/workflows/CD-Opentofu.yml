@@ -4,8 +4,6 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - 'snowflaketest/**'
   workflow_dispatch: # Allows manual trigger for testing
 
 permissions:
