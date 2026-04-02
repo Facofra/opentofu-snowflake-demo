@@ -3,7 +3,8 @@ name: "CD-Opentofu-DEV"
 on:
   pull_request:
     types:
-      - [opened, synchronize]
+      - opened
+      - synchronize
     branches:
       - main
   workflow_dispatch: # Allows manual trigger for testing
