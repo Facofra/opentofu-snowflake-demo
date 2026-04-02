@@ -1,0 +1,42 @@
+name: "CD-Opentofu"
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'snowflaketest/**'
+  workflow_dispatch: # Allows manual trigger for testing
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  call-CD-Opentofu-plan-dev:
+    uses: ./.github/workflows/CD-Opentofu-plan.yml
+    with:
+      environment: "DEV"
+
+  call-CD-Opentofu-apply-dev:
+    needs: call-CD-Opentofu-plan-dev
+    uses: ./.github/workflows/CD-Opentofu-apply.yml
+    with:
+      environment: "DEV"
+
+  call-CD-Opentofu-plan-prod:
+    uses: ./.github/workflows/CD-Opentofu-plan.yml
+    with:
+      environment: "PROD"
+
+  call-CD-Opentofu-apply-prod:
+    if: github.ref == 'refs/heads/main' && github.event.pull_request.merged == true
+    needs: call-CD-Opentofu-plan-prod
+    uses: ./.github/workflows/CD-Opentofu-apply.yml
+    with:
+      environment: "PROD"

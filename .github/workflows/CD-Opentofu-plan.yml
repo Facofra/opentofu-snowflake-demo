@@ -1,4 +1,4 @@
-name: "base plan 2"
+name: "CD-Opentofu-plan"
 
 on:
   workflow_call:
@@ -6,13 +6,9 @@ on:
       environment:
         required: true
         type: string
-    secrets: 
-      my_github_secret:
-        required: true
+
 
 jobs:
-  # --- PLAN JOB ---
-  # Runs automatically on every push to check for syntax and logic
   plan:
     name: "Tofu Plan"
     runs-on: ubuntu-latest
@@ -20,13 +16,19 @@ jobs:
       run:
         working-directory: ./snowflaketest
     env:
-      TF_VAR_my_github_secret: ${{ secrets.my_github_secret }}
-      TF_VAR_environment: ${{ inputs.environment }}
       PLAN_FILE : ${{ github.workspace }}/plans/snowflake-${{ inputs.environment }}.tfplan
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      # UNCOMMENT THIS BLOCK IF AWS IS SET UP 
+      # - name: connect to aws
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     role-to-assume: ${{ secrets.github_opentofu_role }}
+      #     aws-region: ${{ secrets.aws_region }}
+
 
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v1
