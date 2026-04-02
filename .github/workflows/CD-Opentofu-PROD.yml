@@ -1,4 +1,4 @@
-name: "CD-Opentofu"
+name: "CD-Opentofu-PROD"
 
 on:
   pull_request:
