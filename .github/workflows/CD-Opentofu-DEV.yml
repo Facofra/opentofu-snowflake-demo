@@ -1,0 +1,30 @@
+name: "CD-Opentofu"
+
+on:
+  pull_request:
+    types:
+      - [opened, synchronize]
+    branches:
+      - main
+  workflow_dispatch: # Allows manual trigger for testing
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  call-CD-Opentofu-plan-dev:
+    uses: ./.github/workflows/CD-Opentofu-plan.yml
+    with:
+      environment: "DEV"
+
+  call-CD-Opentofu-apply-dev:
+    needs: call-CD-Opentofu-plan-dev
+    uses: ./.github/workflows/CD-Opentofu-apply.yml
+    with:
+      environment: "DEV"
