@@ -1,0 +1,53 @@
+name: "CD-Opentofu-plan"
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+
+
+jobs:
+  plan:
+    name: "Tofu Plan"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./snowflaketest
+    env:
+      PLAN_FILE : ${{ github.workspace }}/plans/snowflake-${{ inputs.environment }}.tfplan
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # UNCOMMENT THIS BLOCK IF AWS IS SET UP 
+      # - name: connect to aws
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     role-to-assume: ${{ secrets.github_opentofu_role }}
+      #     aws-region: ${{ secrets.aws_region }}
+
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.11.5
+
+      - name: Tofu Init
+        run: tofu init
+
+      - name: Tofu Plan
+        run: |
+          mkdir -p ${{ github.workspace }}/plans
+          echo "----- TOFU PLAN ----- Cleaning up the output by hiding (known after apply) to reduce noise "
+          set -o pipefail
+          tofu plan -out=${{ env.PLAN_FILE }} | grep -v "known after apply"
+
+      - name: Upload Tofu Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'TF-Plan-${{ inputs.environment }}'
+          path: ${{ env.PLAN_FILE }}
+          retention-days: 1

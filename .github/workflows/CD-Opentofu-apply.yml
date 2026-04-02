@@ -1,0 +1,52 @@
+name: "CD-Opentofu-apply"
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+
+
+jobs:
+  
+  apply:
+    name: "Tofu Apply"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./snowflaketest
+    
+    # IMPORTANT: This links to a GitHub Environment with protection rules
+    environment: 
+      name: ${{ inputs.environment }}
+      url: https://github.com
+    env:
+      PLAN_FILE : ${{ github.workspace }}/plans/snowflake-${{ inputs.environment }}.tfplan
+
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.11.5
+
+      - name: Download Plan
+        id: download-plan
+        uses: actions/download-artifact@v4
+        with:
+          name: 'TF-Plan-${{ inputs.environment }}'
+          path: ${{ github.workspace }}/plans/
+
+      - name: Tofu Init
+        run: tofu init
+
+      - name: Tofu Apply
+        run: echo "This would apply changes for environment ${{ inputs.environment }}"
+        # run: |
+        #   echo "----- TOFU APPLY -----"
+        #   tofu apply ${{ env.PLAN_FILE }}
