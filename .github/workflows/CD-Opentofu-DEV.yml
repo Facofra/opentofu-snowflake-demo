@@ -23,9 +23,11 @@ jobs:
     uses: ./.github/workflows/CD-Opentofu-plan.yml
     with:
       environment: "DEV"
+    secrets: inherit
 
   call-CD-Opentofu-apply-dev:
     needs: call-CD-Opentofu-plan-dev
     uses: ./.github/workflows/CD-Opentofu-apply.yml
     with:
       environment: "DEV"
+    secrets: inherit

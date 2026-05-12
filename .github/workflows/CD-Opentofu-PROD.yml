@@ -23,6 +23,7 @@ jobs:
     uses: ./.github/workflows/CD-Opentofu-plan.yml
     with:
       environment: "PROD"
+    secrets: inherit
 
   call-CD-Opentofu-apply-prod:
     if: github.event.pull_request.merged == true
@@ -30,3 +31,4 @@ jobs:
     uses: ./.github/workflows/CD-Opentofu-apply.yml
     with:
       environment: "PROD"
+    secrets: inherit

@@ -14,21 +14,24 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./snowflaketest
+        working-directory: ./azure
     env:
-      PLAN_FILE : ${{ github.workspace }}/plans/snowflake-${{ inputs.environment }}.tfplan
+      PLAN_FILE: ${{ github.workspace }}/plans/azure-${{ inputs.environment }}.tfplan
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      ARM_USE_OIDC: "true"
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # UNCOMMENT THIS BLOCK IF AWS IS SET UP 
-      # - name: connect to aws
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     role-to-assume: ${{ secrets.github_opentofu_role }}
-      #     aws-region: ${{ secrets.aws_region }}
-
+      - name: Azure OIDC Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v1
@@ -43,7 +46,7 @@ jobs:
           mkdir -p ${{ github.workspace }}/plans
           echo "----- TOFU PLAN ----- Cleaning up the output by hiding (known after apply) to reduce noise "
           set -o pipefail
-          tofu plan -out=${{ env.PLAN_FILE }} | grep -v "known after apply"
+          tofu plan -input=false -out=${{ env.PLAN_FILE }} | grep -v "known after apply"
 
       - name: Upload Tofu Plan
         uses: actions/upload-artifact@v4
