@@ -16,9 +16,10 @@ concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: true
 
+env:
+  PLAN_FILE: ${{ github.workspace }}/plans/snowflake-PROD-drift.tfplan
+
 jobs:
-  env:
-    PLAN_FILE: ${{ github.workspace }}/plans/snowflake-PROD-drift.tfplan
 
   drift-detection:
     name: "Drift Detection"
