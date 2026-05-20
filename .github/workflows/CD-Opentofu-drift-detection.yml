@@ -73,14 +73,11 @@ jobs:
   remediate:
     name: "Tofu Apply (Drift Remediation)"
     runs-on: ubuntu-latest
-    needs: [drift-detection, notify-teams]
+    needs: [drift-detection]
     if: needs.drift-detection.outputs.drift_detected == 'true'
     defaults:
       run:
         working-directory: ./snowflake
-    environment:
-      name: DRIFT-DETECTION
-      url: https://github.com
     env:
       PLAN_FILE: ${{ github.workspace }}/plans/snowflake-PROD-drift.tfplan
 
