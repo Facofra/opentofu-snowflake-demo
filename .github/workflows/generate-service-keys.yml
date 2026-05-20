@@ -1,9 +1,9 @@
 name: "Generate Snowflake Service Keys (TEST)"
 
 on:
-  push:
-    branches:
-      - test-drift-keys
+  # push:
+  #   branches:
+  #     - test-drift-keys
   workflow_dispatch:
     inputs:
       service_name:

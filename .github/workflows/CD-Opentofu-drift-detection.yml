@@ -37,6 +37,7 @@ jobs:
         uses: opentofu/setup-opentofu@v1
         with:
           tofu_version: 1.11.5
+          tofu_wrapper: false
 
       - name: Tofu Init
         run: tofu init
