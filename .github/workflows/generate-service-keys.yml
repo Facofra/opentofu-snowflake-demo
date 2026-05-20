@@ -1,13 +1,14 @@
-name: "Generate Snowflake Service Keys (TEST)"
+name: "Generate Snowflake Service Keys"
 
 on:
   workflow_dispatch:
     inputs:
       service_name:
-        description: "Snowflake service user"
+        description: "Snowflake service user (ALL = todos)"
         required: true
         type: choice
         options:
+          - ALL
           - SERVICE_DBT
           - SERVICE_DBT_CICD
           - SERVICE_FIVETRAN
@@ -16,10 +17,11 @@ on:
           - SERVICE_CUBE
           - SERVICE_COLLATE
       environment:
-        description: "Target environment"
+        description: "Target environment (ALL = todos)"
         required: true
         type: choice
         options:
+          - ALL
           - cicd
           - prod
 
@@ -27,15 +29,56 @@ permissions:
   contents: read
 
 jobs:
-  generate-keys:
-    name: "Generate RSA key pair (print only)"
+  prepare:
+    name: "Build matrix"
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.build.outputs.matrix }}
+    steps:
+      - name: Build service x environment matrix
+        id: build
+        env:
+          SERVICE_NAME: ${{ inputs.service_name }}
+          ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+
+          ALL_SERVICES='["SERVICE_DBT","SERVICE_DBT_CICD","SERVICE_FIVETRAN","SERVICE_UTMBUILDER","SERVICE_SEGMENT","SERVICE_CUBE","SERVICE_COLLATE"]'
+          ALL_ENVIRONMENTS='["cicd","prod"]'
+
+          if [ "${SERVICE_NAME}" = "ALL" ]; then
+            SERVICES="${ALL_SERVICES}"
+          else
+            SERVICES="[\"${SERVICE_NAME}\"]"
+          fi
+
+          if [ "${ENVIRONMENT}" = "ALL" ]; then
+            ENVIRONMENTS="${ALL_ENVIRONMENTS}"
+          else
+            ENVIRONMENTS="[\"${ENVIRONMENT}\"]"
+          fi
+
+          MATRIX=$(jq -c -n \
+            --argjson services "${SERVICES}" \
+            --argjson environments "${ENVIRONMENTS}" \
+            '{include: [$services[] as $s | $environments[] as $e | {service: $s, environment: $e}]}')
+
+          echo "matrix=${MATRIX}" >> "${GITHUB_OUTPUT}"
+          echo "Matrix: ${MATRIX}"
+
+  generate-keys:
+    name: "Generate RSA key pair (${{ matrix.service }} / ${{ matrix.environment }})"
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
 
     steps:
       - name: Generate RSA key pair and print
         env:
-          SERVICE_NAME: ${{ inputs.service_name || 'SERVICE_DBT' }}
-          ENVIRONMENT: ${{ inputs.environment || 'cicd' }}
+          SERVICE_NAME: ${{ matrix.service }}
+          ENVIRONMENT: ${{ matrix.environment }}
         run: |
           set -euo pipefail
 
