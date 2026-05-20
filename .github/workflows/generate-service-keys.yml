@@ -1,0 +1,64 @@
+name: "Generate Snowflake Service Keys (TEST)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      service_name:
+        description: "Snowflake service user"
+        required: true
+        type: choice
+        options:
+          - SERVICE_DBT
+          - SERVICE_DBT_CICD
+          - SERVICE_FIVETRAN
+          - SERVICE_UTMBUILDER
+          - SERVICE_SEGMENT
+          - SERVICE_CUBE
+          - SERVICE_COLLATE
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - cicd
+          - prod
+
+permissions:
+  contents: read
+
+jobs:
+  generate-keys:
+    name: "Generate RSA key pair (print only)"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate RSA key pair and print
+        env:
+          SERVICE_NAME: ${{ inputs.service_name || 'SERVICE_DBT' }}
+          ENVIRONMENT: ${{ inputs.environment || 'cicd' }}
+        run: |
+          set -euo pipefail
+
+          SECRET_PREFIX="${ENVIRONMENT}-snowflake-$(echo "${SERVICE_NAME}" | tr '[:upper:]' '[:lower:]' | tr '_' '-')"
+
+          PASSPHRASE=$(openssl rand -hex 32)
+
+          openssl genrsa 2048 2>/dev/null | \
+            openssl pkcs8 -topk8 -v2 des3 -inform PEM \
+            -out rsa_key.p8 -passout "pass:${PASSPHRASE}"
+
+          openssl rsa -in rsa_key.p8 -pubout \
+            -out rsa_key.pub -passin "pass:${PASSPHRASE}" 2>/dev/null
+
+          PUBLIC_KEY=$(grep -v "^-----" rsa_key.pub | tr -d '\n')
+
+          echo "=== ${SECRET_PREFIX}-passphrase ==="
+          echo "${PASSPHRASE}"
+          echo ""
+          echo "=== ${SECRET_PREFIX}-private-key ==="
+          cat rsa_key.p8
+          echo ""
+          echo "=== ${SECRET_PREFIX}-public-key (stripped) ==="
+          echo "${PUBLIC_KEY}"
+
+          rm -f rsa_key.p8 rsa_key.pub
