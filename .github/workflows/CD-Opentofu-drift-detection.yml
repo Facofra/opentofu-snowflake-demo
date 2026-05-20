@@ -17,6 +17,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  env:
+    PLAN_FILE: ${{ github.workspace }}/plans/snowflake-PROD-drift.tfplan
 
   drift-detection:
     name: "Drift Detection"
@@ -26,8 +28,6 @@ jobs:
         working-directory: ./snowflake
     outputs:
       drift_detected: ${{ steps.plan.outputs.drift_detected }}
-    env:
-      PLAN_FILE: ${{ github.workspace }}/plans/snowflake-PROD-drift.tfplan
 
     steps:
       - name: Checkout Code
@@ -79,9 +79,6 @@ jobs:
     defaults:
       run:
         working-directory: ./snowflake
-    env:
-      PLAN_FILE: ${{ github.workspace }}/plans/snowflake-PROD-drift.tfplan
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -101,7 +98,7 @@ jobs:
         run: tofu init
 
       - name: Tofu Apply
-        run: echo "----- placeholder applying -----"
+        run: echo "----- placeholder applying ${{ env.PLAN_FILE }} -----"
         # run: |
         #   echo "----- TOFU APPLY -----"
         #   tofu apply -input=false ${{ env.PLAN_FILE }}
