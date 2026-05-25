@@ -1,12 +1,13 @@
-name: "Generate Snowflake Service Keys"
+name: "Generate Snowflake Service Keys -> Azure Key Vault"
 
 on:
   workflow_dispatch:
     inputs:
       service_name:
-        description: "Snowflake service user (ALL = todos)"
+        description: "Snowflake service (ALL = todos)"
         required: true
         type: choice
+        default: ALL
         options:
           - ALL
           - SERVICE_DBT
@@ -16,10 +17,12 @@ on:
           - SERVICE_SEGMENT
           - SERVICE_CUBE
           - SERVICE_COLLATE
+          - SERVICE_OPENTOFU
       environment:
         description: "Target environment (ALL = todos)"
         required: true
         type: choice
+        default: ALL
         options:
           - ALL
           - cicd
@@ -28,80 +31,171 @@ on:
 permissions:
   contents: read
 
+env:
+  ARM_CLIENT_ID:       ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_CLIENT_SECRET:   ${{ secrets.AZURE_CLIENT_SECRET }}
+  ARM_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  TOFU_VERSION:        "1.11.5"
+
 jobs:
-  prepare:
-    name: "Build matrix"
+  plan:
+    name: "Tofu plan (preview con valores dummy)"
     runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.build.outputs.matrix }}
+    defaults:
+      run:
+        working-directory: ./azure
+
     steps:
-      - name: Build service x environment matrix
-        id: build
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: ${{ env.TOFU_VERSION }}
+
+      - name: Build terraform.tfvars.json with dummy values
         env:
           SERVICE_NAME: ${{ inputs.service_name }}
-          ENVIRONMENT: ${{ inputs.environment }}
+          ENVIRONMENT:  ${{ inputs.environment }}
         run: |
           set -euo pipefail
 
-          ALL_SERVICES='["SERVICE_DBT","SERVICE_DBT_CICD","SERVICE_FIVETRAN","SERVICE_UTMBUILDER","SERVICE_SEGMENT","SERVICE_CUBE","SERVICE_COLLATE"]'
-          ALL_ENVIRONMENTS='["cicd","prod"]'
+          ALL_SERVICES=(SERVICE_DBT SERVICE_DBT_CICD SERVICE_FIVETRAN SERVICE_UTMBUILDER SERVICE_SEGMENT SERVICE_CUBE SERVICE_COLLATE SERVICE_OPENTOFU)
+          ALL_ENVS=(cicd prod)
 
-          if [ "${SERVICE_NAME}" = "ALL" ]; then
-            SERVICES="${ALL_SERVICES}"
+          if [[ "$SERVICE_NAME" == "ALL" ]]; then
+            SERVICES=("${ALL_SERVICES[@]}")
           else
-            SERVICES="[\"${SERVICE_NAME}\"]"
+            SERVICES=("$SERVICE_NAME")
           fi
 
-          if [ "${ENVIRONMENT}" = "ALL" ]; then
-            ENVIRONMENTS="${ALL_ENVIRONMENTS}"
+          if [[ "$ENVIRONMENT" == "ALL" ]]; then
+            ENVS=("${ALL_ENVS[@]}")
           else
-            ENVIRONMENTS="[\"${ENVIRONMENT}\"]"
+            ENVS=("$ENVIRONMENT")
           fi
 
-          MATRIX=$(jq -c -n \
-            --argjson services "${SERVICES}" \
-            --argjson environments "${ENVIRONMENTS}" \
-            '{include: [$services[] as $s | $environments[] as $e | {service: $s, environment: $e}]}')
+          echo '{"service_keys": {}}' > tfvars.json
 
-          echo "matrix=${MATRIX}" >> "${GITHUB_OUTPUT}"
-          echo "Matrix: ${MATRIX}"
+          for SVC in "${SERVICES[@]}"; do
+            for ENV in "${ENVS[@]}"; do
+              SVC_KEBAB=$(echo "$SVC" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
+              if [[ "$ENV" == "prod" ]]; then
+                ENV_PART="drhorton"
+              else
+                ENV_PART="drhorton${ENV}"
+              fi
+              KEY_NAME="snowflake-${ENV_PART}-${SVC_KEBAB}"
 
-  generate-keys:
-    name: "Generate RSA key pair (${{ matrix.service }} / ${{ matrix.environment }})"
-    needs: prepare
+              jq --arg name "$KEY_NAME" \
+                '.service_keys[$name] = {passphrase: "PLAN_PREVIEW", private_key: "PLAN_PREVIEW", public_key: "PLAN_PREVIEW"}' \
+                tfvars.json > tfvars.tmp && mv tfvars.tmp tfvars.json
+            done
+          done
+
+          mv tfvars.json terraform.tfvars.json
+          echo "Preview entries: $(jq '.service_keys | length' terraform.tfvars.json)"
+
+      - name: Tofu Init
+        run: tofu init
+
+      - name: Tofu Plan
+        run: |
+          echo "NOTA: este plan usa valores placeholder. El apply genera las keys reales con openssl."
+          tofu plan -input=false
+
+      - name: Cleanup tfvars
+        if: always()
+        run: rm -f terraform.tfvars.json
+
+  apply:
+    name: "Tofu apply (genera keys reales, requiere approval)"
+    needs: plan
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+    environment: azure-keyvault-apply
+    defaults:
+      run:
+        working-directory: ./azure
 
     steps:
-      - name: Generate RSA key pair and print
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: ${{ env.TOFU_VERSION }}
+
+      - name: Generate real RSA keys -> terraform.tfvars.json
         env:
-          SERVICE_NAME: ${{ matrix.service }}
-          ENVIRONMENT: ${{ matrix.environment }}
+          SERVICE_NAME: ${{ inputs.service_name }}
+          ENVIRONMENT:  ${{ inputs.environment }}
         run: |
           set -euo pipefail
 
-          SECRET_PREFIX="${ENVIRONMENT}-snowflake-$(echo "${SERVICE_NAME}" | tr '[:upper:]' '[:lower:]' | tr '_' '-')"
+          ALL_SERVICES=(SERVICE_DBT SERVICE_DBT_CICD SERVICE_FIVETRAN SERVICE_UTMBUILDER SERVICE_SEGMENT SERVICE_CUBE SERVICE_COLLATE SERVICE_OPENTOFU)
+          ALL_ENVS=(cicd prod)
 
-          PASSPHRASE=$(openssl rand -hex 32)
+          if [[ "$SERVICE_NAME" == "ALL" ]]; then
+            SERVICES=("${ALL_SERVICES[@]}")
+          else
+            SERVICES=("$SERVICE_NAME")
+          fi
 
-          openssl genrsa 2048 2>/dev/null | \
-            openssl pkcs8 -topk8 -v2 des3 -inform PEM \
-            -out rsa_key.p8 -passout "pass:${PASSPHRASE}"
+          if [[ "$ENVIRONMENT" == "ALL" ]]; then
+            ENVS=("${ALL_ENVS[@]}")
+          else
+            ENVS=("$ENVIRONMENT")
+          fi
 
-          openssl rsa -in rsa_key.p8 -pubout \
-            -out rsa_key.pub -passin "pass:${PASSPHRASE}" 2>/dev/null
+          echo '{"service_keys": {}}' > tfvars.json
 
-          PUBLIC_KEY=$(grep -v "^-----" rsa_key.pub | tr -d '\n')
+          for SVC in "${SERVICES[@]}"; do
+            for ENV in "${ENVS[@]}"; do
+              SVC_KEBAB=$(echo "$SVC" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
+              if [[ "$ENV" == "prod" ]]; then
+                ENV_PART="drhorton"
+              else
+                ENV_PART="drhorton${ENV}"
+              fi
+              KEY_NAME="snowflake-${ENV_PART}-${SVC_KEBAB}"
+              echo "::group::Generando $KEY_NAME"
 
-          echo "=== ${SECRET_PREFIX}-passphrase ==="
-          echo "${PASSPHRASE}"
-          echo ""
-          echo "=== ${SECRET_PREFIX}-private-key ==="
-          cat rsa_key.p8
-          echo ""
-          echo "=== ${SECRET_PREFIX}-public-key (stripped) ==="
-          echo "${PUBLIC_KEY}"
+              PASSPHRASE=$(openssl rand -hex 32)
+              PRIV=$(mktemp); PUB=$(mktemp)
 
-          rm -f rsa_key.p8 rsa_key.pub
+              openssl genrsa 2048 2>/dev/null \
+                | openssl pkcs8 -topk8 -v2 des3 -inform PEM \
+                    -out "$PRIV" -passout "pass:$PASSPHRASE"
+              openssl rsa -in "$PRIV" -pubout -out "$PUB" \
+                -passin "pass:$PASSPHRASE" 2>/dev/null
+
+              PRIVATE_KEY=$(cat "$PRIV")
+              PUBLIC_KEY=$(grep -v '^-----' "$PUB" | tr -d '\n')
+              rm -f "$PRIV" "$PUB"
+
+              jq --arg name "$KEY_NAME" \
+                 --arg p    "$PASSPHRASE" \
+                 --arg priv "$PRIVATE_KEY" \
+                 --arg pub  "$PUBLIC_KEY" \
+                '.service_keys[$name] = {passphrase: $p, private_key: $priv, public_key: $pub}' \
+                tfvars.json > tfvars.tmp && mv tfvars.tmp tfvars.json
+
+              echo "::endgroup::"
+            done
+          done
+
+          mv tfvars.json terraform.tfvars.json
+          echo "Total entries: $(jq '.service_keys | length' terraform.tfvars.json)"
+
+      - name: Tofu Init
+        run: tofu init
+
+      - name: Tofu Apply
+        run: tofu apply -input=false -auto-approve
+
+      - name: Cleanup tfvars
+        if: always()
+        run: rm -f terraform.tfvars.json
