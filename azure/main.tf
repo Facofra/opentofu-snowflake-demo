@@ -20,8 +20,6 @@ provider "azurerm" {
   }
 }
 
-data "azurerm_client_config" "current" {}
-
 data "azurerm_key_vault" "kv" {
   name                = "kv-snowflake-facu-001"
   resource_group_name = "tofu-group"
@@ -36,12 +34,6 @@ variable "service_keys" {
   }))
   default   = {}
   sensitive = true
-}
-
-resource "azurerm_role_assignment" "kv_secrets_officer" {
-  scope                = data.azurerm_key_vault.kv.id
-  role_definition_name = "Key Vault Secrets Officer"
-  principal_id         = data.azurerm_client_config.current.object_id
 }
 
 locals {
@@ -124,7 +116,6 @@ resource "azurerm_key_vault_secret" "passphrase" {
   name         = "${each.key}-passphrase"
   value        = local.effective_values[each.key].passphrase
   key_vault_id = data.azurerm_key_vault.kv.id
-  depends_on   = [azurerm_role_assignment.kv_secrets_officer]
 }
 
 resource "azurerm_key_vault_secret" "private_key" {
@@ -132,7 +123,6 @@ resource "azurerm_key_vault_secret" "private_key" {
   name         = "${each.key}-private-key"
   value        = local.effective_values[each.key].private_key
   key_vault_id = data.azurerm_key_vault.kv.id
-  depends_on   = [azurerm_role_assignment.kv_secrets_officer]
 }
 
 resource "azurerm_key_vault_secret" "public_key" {
@@ -140,5 +130,4 @@ resource "azurerm_key_vault_secret" "public_key" {
   name         = "${each.key}-public-key"
   value        = local.effective_values[each.key].public_key
   key_vault_id = data.azurerm_key_vault.kv.id
-  depends_on   = [azurerm_role_assignment.kv_secrets_officer]
 }
