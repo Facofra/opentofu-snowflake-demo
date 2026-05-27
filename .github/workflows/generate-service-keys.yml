@@ -1,6 +1,9 @@
 name: "Generate Snowflake Service Keys -> Azure Key Vault"
 
 on:
+  push:
+    branches:
+      - test-envns-choices
   workflow_dispatch:
     inputs:
       service_name:

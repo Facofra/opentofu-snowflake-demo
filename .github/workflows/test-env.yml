@@ -1,0 +1,48 @@
+name: "TEST-env"
+
+on:
+  push:
+    branches:
+      - test-envns-choices
+  workflow_dispatch:
+    inputs:
+      service_name:
+        description: "Snowflake service (ALL = todos)"
+        required: true
+        type: choice
+        default: ALL
+        options:
+          - ALL
+          - SERVICE_DBT
+          - SERVICE_DBT_CICD
+          - SERVICE_FIVETRAN
+          - SERVICE_UTMBUILDER
+          - SERVICE_SEGMENT
+          - SERVICE_CUBE
+          - SERVICE_COLLATE
+          - SERVICE_OPENTOFU
+      environment:
+        description: "Target environment (ALL = todos)"
+        required: true
+        type: choice
+        default: ALL
+        options:
+          - ALL
+          - cicd
+          - prod
+
+permissions:
+  contents: read
+
+
+jobs:
+
+  apply:
+    name: "Tofu apply (genera keys reales, requiere approval)"
+    runs-on: ubuntu-latest
+    environment: azure-keyvault-apply
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
