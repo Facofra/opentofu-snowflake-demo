@@ -1,46 +1,55 @@
 terraform {
-  backend "s3" {
-    # configure these values for your environment
-    bucket = "opentofu-state-demo-bucket-${var.environment}"
-    key    = "terraform.tfstate"
-    region = "us-east-1"
-    use_lockfile=true
+  required_version = ">= 1.6"
+  required_providers {
+    azurerm = { source = "hashicorp/azurerm", version = "~> 4.0" }
+    null    = { source = "hashicorp/null",    version = "~> 3.2" }
+  }
+  backend "azurerm" {
+    resource_group_name  = "tofu-group"
+    storage_account_name = "opentofuttetst"
+    container_name       = "azure"
+    key                  = "snowflake.tfstate"
   }
 }
 
-# AWS provider configuration (required to manage resources)
-provider "aws" {
-  region = "us-east-1"
+provider "azurerm" {
+  features {}
 }
 
-# create the bucket where the state is stored (if it doesn't already exist)
-resource "aws_s3_bucket" "demo-bucket" {
-  bucket = "opentofu-demo-bucket-${var.environment}-v3"
+data "azurerm_key_vault" "kv" {
+  name                = "kv-snowflake-facu-001"
+  resource_group_name = "tofu-group"
 }
 
+# Lista todos los nombres de secrets en el KV.
+data "azurerm_key_vault_secrets" "all" {
+  key_vault_id = data.azurerm_key_vault.kv.id
+}
 
+locals {
+  # Filtra solo los public keys.
+  public_key_names = toset([
+    for n in data.azurerm_key_vault_secrets.all.names : n
+    if endswith(n, "-public-key")
+  ])
+}
 
+# Lee el valor de cada public key.
+data "azurerm_key_vault_secret" "public_keys" {
+  for_each     = local.public_key_names
+  name         = each.key
+  key_vault_id = data.azurerm_key_vault.kv.id
+}
 
+# Echo de los primeros 50 caracteres de cada public key en el apply.
+resource "null_resource" "echo_public_keys" {
+  for_each = data.azurerm_key_vault_secret.public_keys
 
-# A very simple configuration that doesn't need external providers
-resource "null_resource" "example2" {
+  triggers = {
+    snippet = substr(nonsensitive(each.value.value), 0, 50)
+  }
+
   provisioner "local-exec" {
-    command = "echo 'Hello OpenTofu! Environment: ${var.environment}. The secret value is: ${nonsensitive(var.my_github_secret)}'"
+    command = "echo '${each.key}: ${substr(nonsensitive(each.value.value), 0, 50)}'"
   }
-}
-
-
-
-
-
-variable "environment" {
-  type    = string
-  default = "dev"
-}
-
-variable "my_github_secret" {
-  type      = string
-  sensitive = true # This hides the value from OpenTofu logs
-  default = "secret_value"
-
 }
