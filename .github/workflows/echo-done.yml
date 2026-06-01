@@ -1,0 +1,13 @@
+name: Echo Done
+
+on:
+  schedule:
+    - cron: "21 13 * * *"
+      timezone: "America/Chicago"
+
+jobs:
+  echo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Done
+        run: echo done
