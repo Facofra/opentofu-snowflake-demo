@@ -2,8 +2,9 @@ name: Echo Done
 
 on:
   schedule:
-    - cron: "21 13 * * *"
+    - cron: "30 13 * * *"
       timezone: "America/Chicago"
+  workflow_dispatch:
 
 jobs:
   echo:
