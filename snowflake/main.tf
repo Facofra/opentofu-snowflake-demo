@@ -6,7 +6,7 @@ terraform {
 }
 
 resource "null_resource" "echo_public_keys" {
-
+  count = 0
   provisioner "local-exec" {
     command = "echo 'nada que se yo'"
   }
