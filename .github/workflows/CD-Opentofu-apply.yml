@@ -7,6 +7,10 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+  id-token: write
+
 
 jobs:
 
@@ -15,30 +19,19 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./azure
+        working-directory: ./snowflake
 
     # IMPORTANT: This links to a GitHub Environment with protection rules
     environment:
       name: ${{ inputs.environment }}
       url: https://github.com
     env:
-      PLAN_FILE: ${{ github.workspace }}/plans/azure-${{ inputs.environment }}.tfplan
-      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      ARM_USE_OIDC: "true"
+      PLAN_FILE: ${{ github.workspace }}/plans/snowflake-${{ inputs.environment }}.tfplan
 
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Azure OIDC Login
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v1
@@ -53,9 +46,12 @@ jobs:
           path: ${{ github.workspace }}/plans/
 
       - name: Tofu Init
-        run: tofu init
+        run: tofu init -backend-config="container_name=${{ inputs.container_name }}" -backend-config="key=${{ vars.TF_STATE_KEY_SNOWFLAKE }}"
 
       - name: Tofu Apply
         run: |
+          echo "----- TOFU SHOW -----"
+          set -o pipefail
+          tofu show ${{ env.PLAN_FILE }} | grep -v "known after apply"
           echo "----- TOFU APPLY -----"
           tofu apply -input=false ${{ env.PLAN_FILE }}

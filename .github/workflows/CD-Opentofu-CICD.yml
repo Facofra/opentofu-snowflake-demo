@@ -1,13 +1,15 @@
-name: "CD-Opentofu-DEV"
+name: "CD-Opentofu-CICD"
 
 on:
   pull_request:
     types:
       - opened
+      - reopened
       - synchronize
     branches:
       - main
-  workflow_dispatch: # Allows manual trigger for testing
+    paths:
+      - 'snowflake/**'
 
 permissions:
   contents: read
@@ -19,15 +21,14 @@ concurrency:
 
 jobs:
 
-  call-CD-Opentofu-plan-dev:
+  call-CD-Opentofu-plan-cicd:
     uses: ./.github/workflows/CD-Opentofu-plan.yml
     with:
-      environment: "DEV"
-    secrets: inherit
+      environment: "CICD"
 
-  call-CD-Opentofu-apply-dev:
-    needs: call-CD-Opentofu-plan-dev
+  call-CD-Opentofu-apply-cicd:
+    needs: call-CD-Opentofu-plan-cicd
+    if: needs.call-CD-Opentofu-plan-cicd.outputs.has_changes == 'true'
     uses: ./.github/workflows/CD-Opentofu-apply.yml
     with:
-      environment: "DEV"
-    secrets: inherit
+      environment: "CICD"

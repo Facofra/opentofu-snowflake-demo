@@ -6,6 +6,14 @@ on:
       environment:
         required: true
         type: string
+    outputs:
+      has_changes:
+        description: "Whether the plan contains changes (exit code 2). False means no-op."
+        value: ${{ jobs.plan.outputs.has_changes }}
+
+permissions:
+  contents: read
+  id-token: write
 
 
 jobs:
@@ -14,24 +22,15 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./azure
+        working-directory: ./snowflake
+    outputs:
+      has_changes: ${{ steps.plan.outputs.has_changes }}
     env:
-      PLAN_FILE: ${{ github.workspace }}/plans/azure-${{ inputs.environment }}.tfplan
-      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      ARM_USE_OIDC: "true"
+      PLAN_FILE: ${{ github.workspace }}/plans/snowflake-${{ inputs.environment }}.tfplan
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Azure OIDC Login
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v1
@@ -39,16 +38,34 @@ jobs:
           tofu_version: 1.11.5
 
       - name: Tofu Init
-        run: tofu init
+        run: tofu init -backend-config="container_name=${{ inputs.container_name }}" -backend-config="key=${{ vars.TF_STATE_KEY_SNOWFLAKE }}"
 
       - name: Tofu Plan
+        id: plan
+        shell: bash
         run: |
           mkdir -p ${{ github.workspace }}/plans
-          echo "----- TOFU PLAN ----- Cleaning up the output by hiding (known after apply) to reduce noise "
-          set -o pipefail
-          tofu plan -input=false -out=${{ env.PLAN_FILE }} | grep -v "known after apply"
+          echo "----- TOFU PLAN ----- Hiding (known after apply) to reduce noise"
+          set +e
+
+          tofu plan -detailed-exitcode -input=false -out=${{ env.PLAN_FILE }} | grep -v "known after apply"
+          
+          EXIT_CODE=${PIPESTATUS[0]}
+          echo  "exit code: $EXIT_CODE"
+          
+          if [ "$EXIT_CODE" -eq 0 ]; then
+            echo "Plan complete — no changes."
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          elif [ "$EXIT_CODE" -eq 2 ]; then
+            echo "Plan complete — changes detected."
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Tofu plan failed with exit code $EXIT_CODE"
+            exit $EXIT_CODE
+          fi
 
       - name: Upload Tofu Plan
+        if: steps.plan.outputs.has_changes == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: 'TF-Plan-${{ inputs.environment }}'

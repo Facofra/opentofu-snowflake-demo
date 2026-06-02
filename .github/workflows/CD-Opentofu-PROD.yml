@@ -6,7 +6,8 @@ on:
       - closed
     branches:
       - main
-  workflow_dispatch: # Allows manual trigger for testing
+    paths:
+      - 'snowflake/**'
 
 permissions:
   contents: read
@@ -23,12 +24,10 @@ jobs:
     uses: ./.github/workflows/CD-Opentofu-plan.yml
     with:
       environment: "PROD"
-    secrets: inherit
 
   call-CD-Opentofu-apply-prod:
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true && needs.call-CD-Opentofu-plan-prod.outputs.has_changes == 'true'
     needs: call-CD-Opentofu-plan-prod
     uses: ./.github/workflows/CD-Opentofu-apply.yml
     with:
       environment: "PROD"
-    secrets: inherit
