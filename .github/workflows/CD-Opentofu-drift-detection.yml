@@ -35,50 +35,6 @@ jobs:
     with:
       environment: ${{ github.event_name != 'workflow_dispatch' && 'PROD' || inputs.environment }}
 
-  notify-teams:
-    name: "Notify Teams"
-    runs-on: ubuntu-latest
-    needs: call-plan
-    if: needs.call-plan.outputs.has_changes == 'true'
-    steps:
-      - name: Send Teams alert
-        run: |
-          curl --fail-with-body --silent --show-error \
-            -X POST "${{ secrets.TEAMS_ALERTS_WEBHOOK_URL }}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "type": "message",
-              "attachments": [{
-                "contentType": "application/vnd.microsoft.card.adaptive",
-                "content": {
-                  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-                  "type": "AdaptiveCard",
-                  "version": "1.2",
-                  "body": [
-                    {
-                      "type": "TextBlock",
-                      "text": "⚠️ IaC Drift Detected in ${{ env.TARGET_ENV }}",
-                      "weight": "Bolder",
-                      "size": "Medium"
-                    },
-                    {
-                      "type": "TextBlock",
-                      "text": "Drift was detected in the ${{ env.TARGET_ENV }} Snowflake environment. A remediation apply is pending approval.",
-                      "wrap": true
-                    },
-                    {
-                      "type": "ActionSet",
-                      "actions": [{
-                        "type": "Action.OpenUrl",
-                        "title": "View Run ${{ github.run_id }}",
-                        "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-                      }]
-                    }
-                  ]
-                }
-              }]
-            }'
-
   call-apply:
     needs: call-plan
     if: needs.call-plan.outputs.has_changes == 'true'
