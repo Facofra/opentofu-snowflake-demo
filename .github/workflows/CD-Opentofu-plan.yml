@@ -38,7 +38,7 @@ jobs:
           tofu_version: 1.11.5
 
       - name: Tofu Init
-        run: tofu init -backend-config="container_name=${{ inputs.container_name }}" -backend-config="key=${{ vars.TF_STATE_KEY_SNOWFLAKE }}"
+        run: tofu init
 
       - name: Tofu Plan
         id: plan
@@ -52,7 +52,7 @@ jobs:
           
           EXIT_CODE=${PIPESTATUS[0]}
           echo  "exit code: $EXIT_CODE"
-          
+
           if [ "$EXIT_CODE" -eq 0 ]; then
             echo "Plan complete — no changes."
             echo "has_changes=false" >> "$GITHUB_OUTPUT"

@@ -46,7 +46,7 @@ jobs:
           path: ${{ github.workspace }}/plans/
 
       - name: Tofu Init
-        run: tofu init -backend-config="container_name=${{ inputs.container_name }}" -backend-config="key=${{ vars.TF_STATE_KEY_SNOWFLAKE }}"
+        run: tofu init
 
       - name: Tofu Apply
         run: |
